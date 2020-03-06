@@ -42,7 +42,7 @@
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -79,9 +79,9 @@
 	}
 
 
-/***/ },
+/***/ }),
 /* 1 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	
 	(function() {
@@ -1649,8 +1649,7 @@
 		var type = typeof v;
 		if (type === 'function')
 		{
-			var name = v.func ? v.func.name : v.name;
-			return '<function' + (name === '' ? '' : ':') + name + '>';
+			return '<function>';
 		}
 
 		if (type === 'boolean')
@@ -2157,6 +2156,13 @@
 	var _elm_lang$core$List$sortBy = _elm_lang$core$Native_List.sortBy;
 	var _elm_lang$core$List$sort = function (xs) {
 		return A2(_elm_lang$core$List$sortBy, _elm_lang$core$Basics$identity, xs);
+	};
+	var _elm_lang$core$List$singleton = function (value) {
+		return {
+			ctor: '::',
+			_0: value,
+			_1: {ctor: '[]'}
+		};
 	};
 	var _elm_lang$core$List$drop = F2(
 		function (n, list) {
@@ -3771,15 +3777,8 @@
 			sentBeforeInit.push(value);
 		}
 
-		function postInitSend(incomingValue)
+		function postInitSend(value)
 		{
-			var result = A2(_elm_lang$core$Json_Decode$decodeValue, converter, incomingValue);
-			if (result.ctor === 'Err')
-			{
-				throw new Error('Trying to send an unexpected type of value through port `' + name + '`:\n' + result._0);
-			}
-
-			var value = result._0;
 			var temp = subs;
 			while (temp.ctor !== '[]')
 			{
@@ -3790,7 +3789,13 @@
 
 		function send(incomingValue)
 		{
-			currentSend(incomingValue);
+			var result = A2(_elm_lang$core$Json_Decode$decodeValue, converter, incomingValue);
+			if (result.ctor === 'Err')
+			{
+				throw new Error('Trying to send an unexpected type of value through port `' + name + '`:\n' + result._0);
+			}
+
+			currentSend(result._0);
 		}
 
 		return { send: send };
@@ -4214,7 +4219,7 @@
 	function indexes(sub, str)
 	{
 		var subLen = sub.length;
-		
+
 		if (subLen < 1)
 		{
 			return _elm_lang$core$Native_List.Nil;
@@ -4227,74 +4232,78 @@
 		{
 			is.push(i);
 			i = i + subLen;
-		}	
-		
+		}
+
 		return _elm_lang$core$Native_List.fromArray(is);
 	}
+
 
 	function toInt(s)
 	{
 		var len = s.length;
+
+		// if empty
 		if (len === 0)
 		{
-			return _elm_lang$core$Result$Err("could not convert string '" + s + "' to an Int" );
+			return intErr(s);
 		}
-		var start = 0;
-		if (s[0] === '-')
+
+		// if hex
+		var c = s[0];
+		if (c === '0' && s[1] === 'x')
 		{
-			if (len === 1)
+			for (var i = 2; i < len; ++i)
 			{
-				return _elm_lang$core$Result$Err("could not convert string '" + s + "' to an Int" );
+				var c = s[i];
+				if (('0' <= c && c <= '9') || ('A' <= c && c <= 'F') || ('a' <= c && c <= 'f'))
+				{
+					continue;
+				}
+				return intErr(s);
 			}
-			start = 1;
+			return _elm_lang$core$Result$Ok(parseInt(s, 16));
 		}
-		for (var i = start; i < len; ++i)
+
+		// is decimal
+		if (c > '9' || (c < '0' && c !== '-' && c !== '+'))
+		{
+			return intErr(s);
+		}
+		for (var i = 1; i < len; ++i)
 		{
 			var c = s[i];
 			if (c < '0' || '9' < c)
 			{
-				return _elm_lang$core$Result$Err("could not convert string '" + s + "' to an Int" );
+				return intErr(s);
 			}
 		}
+
 		return _elm_lang$core$Result$Ok(parseInt(s, 10));
 	}
 
+	function intErr(s)
+	{
+		return _elm_lang$core$Result$Err("could not convert string '" + s + "' to an Int");
+	}
+
+
 	function toFloat(s)
 	{
-		var len = s.length;
-		if (len === 0)
+		// check if it is a hex, octal, or binary number
+		if (s.length === 0 || /[\sxbo]/.test(s))
 		{
-			return _elm_lang$core$Result$Err("could not convert string '" + s + "' to a Float" );
+			return floatErr(s);
 		}
-		var start = 0;
-		if (s[0] === '-')
-		{
-			if (len === 1)
-			{
-				return _elm_lang$core$Result$Err("could not convert string '" + s + "' to a Float" );
-			}
-			start = 1;
-		}
-		var dotCount = 0;
-		for (var i = start; i < len; ++i)
-		{
-			var c = s[i];
-			if ('0' <= c && c <= '9')
-			{
-				continue;
-			}
-			if (c === '.')
-			{
-				dotCount += 1;
-				if (dotCount <= 1)
-				{
-					continue;
-				}
-			}
-			return _elm_lang$core$Result$Err("could not convert string '" + s + "' to a Float" );
-		}
-		return _elm_lang$core$Result$Ok(parseFloat(s));
+		var n = +s;
+		// faster isNaN check
+		return n === n ? _elm_lang$core$Result$Ok(n) : floatErr(s);
 	}
+
+	function floatErr(s)
+	{
+		return _elm_lang$core$Result$Err("could not convert string '" + s + "' to a Float");
+	}
+
 
 	function toList(str)
 	{
@@ -5534,11 +5543,6 @@
 					problem = problem.rest;
 					break;
 
-				case 'index':
-					context += '[' + problem.index + ']';
-					problem = problem.rest;
-					break;
-
 				case 'oneOf':
 					var problems = problem.problems;
 					for (var i = 0; i < problems.length; i++)
@@ -6403,9 +6407,9 @@
 
 	function equalEvents(a, b)
 	{
-		if (!a.options === b.options)
+		if (a.options !== b.options)
 		{
-			if (a.stopPropagation !== b.stopPropagation || a.preventDefault !== b.preventDefault)
+			if (a.options.stopPropagation !== b.options.stopPropagation || a.options.preventDefault !== b.options.preventDefault)
 			{
 				return false;
 			}
@@ -7681,7 +7685,7 @@
 	var rAF =
 		typeof requestAnimationFrame !== 'undefined'
 			? requestAnimationFrame
-			: function(callback) { callback(); };
+			: function(callback) { setTimeout(callback, 1000 / 60); };
 
 	function makeStepper(domNode, view, initialVirtualNode, eventNode)
 	{
@@ -9500,44 +9504,58 @@
 			},
 			palette);
 	};
+	var _toolness$accessible_color_matrix$Palette$deserializePalette = function (items) {
+		var entry = F2(
+			function (id, _p2) {
+				var _p3 = _p2;
+				var _p4 = _p3._1;
+				return {
+					id: id,
+					name: _p3._0,
+					color: _toolness$accessible_color_matrix$Palette$safeHexToColor(_p4),
+					editableColor: _toolness$accessible_color_matrix$Palette$filterHex(_p4)
+				};
+			});
+		return A2(_elm_lang$core$List$indexedMap, entry, items);
+	};
 	var _toolness$accessible_color_matrix$Palette$updatePalette = F2(
 		function (msg, palette) {
-			var _p2 = msg;
-			switch (_p2.ctor) {
+			var _p5 = msg;
+			switch (_p5.ctor) {
 				case 'ChangeName':
 					return A2(
 						_elm_lang$core$List$map,
 						function (e) {
-							return _elm_lang$core$Native_Utils.eq(e.id, _p2._0) ? _elm_lang$core$Native_Utils.update(
+							return _elm_lang$core$Native_Utils.eq(e.id, _p5._0) ? _elm_lang$core$Native_Utils.update(
 								e,
-								{name: _p2._1}) : e;
+								{name: _p5._1}) : e;
 						},
 						palette);
 				case 'ChangeColor':
-					var newColor = _toolness$accessible_color_matrix$Palette$filterHex(_p2._1);
+					var newColor = _toolness$accessible_color_matrix$Palette$filterHex(_p5._1);
 					var changeColor = function (entry) {
-						var _p3 = _eskimoblood$elm_color_extra$Color_Convert$hexToColor(newColor);
-						if (_p3.ctor === 'Nothing') {
+						var _p6 = _eskimoblood$elm_color_extra$Color_Convert$hexToColor(newColor);
+						if (_p6.ctor === 'Nothing') {
 							return _elm_lang$core$Native_Utils.update(
 								entry,
 								{editableColor: newColor});
 						} else {
 							return _elm_lang$core$Native_Utils.update(
 								entry,
-								{color: _p3._0, editableColor: newColor});
+								{color: _p6._0, editableColor: newColor});
 						}
 					};
 					return A2(
 						_elm_lang$core$List$map,
 						function (e) {
-							return _elm_lang$core$Native_Utils.eq(e.id, _p2._0) ? changeColor(e) : e;
+							return _elm_lang$core$Native_Utils.eq(e.id, _p5._0) ? changeColor(e) : e;
 						},
 						palette);
 				case 'Remove':
 					return A2(
 						_elm_lang$core$List$filter,
 						function (e) {
-							return !_elm_lang$core$Native_Utils.eq(e.id, _p2._0);
+							return !_elm_lang$core$Native_Utils.eq(e.id, _p5._0);
 						},
 						palette);
 				default:
@@ -9571,24 +9589,6 @@
 						});
 			}
 		});
-	var _toolness$accessible_color_matrix$Palette$maxPaletteEntries = 6;
-	var _toolness$accessible_color_matrix$Palette$deserializePalette = function (items) {
-		var entry = F2(
-			function (id, _p4) {
-				var _p5 = _p4;
-				var _p6 = _p5._1;
-				return {
-					id: id,
-					name: _p5._0,
-					color: _toolness$accessible_color_matrix$Palette$safeHexToColor(_p6),
-					editableColor: _toolness$accessible_color_matrix$Palette$filterHex(_p6)
-				};
-			});
-		return A2(
-			_elm_lang$core$List$indexedMap,
-			entry,
-			A2(_elm_lang$core$List$take, _toolness$accessible_color_matrix$Palette$maxPaletteEntries, items));
-	};
 	var _toolness$accessible_color_matrix$Palette$PaletteEntry = F4(
 		function (a, b, c, d) {
 			return {id: a, name: b, color: c, editableColor: d};
@@ -9607,9 +9607,7 @@
 		});
 	var _toolness$accessible_color_matrix$Palette$paletteUl = F2(
 		function (palette, isEditable) {
-			var addActions = (isEditable && (_elm_lang$core$Native_Utils.cmp(
-				_elm_lang$core$List$length(palette),
-				_toolness$accessible_color_matrix$Palette$maxPaletteEntries) < 0)) ? {
+			var addActions = isEditable ? {
 				ctor: '::',
 				_0: A2(
 					_elm_lang$html$Html$li,
@@ -10888,9 +10886,9 @@
 
 
 
-/***/ },
+/***/ }),
 /* 2 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	var querystring = __webpack_require__(3);
 
@@ -10939,9 +10937,9 @@
 	};
 
 
-/***/ },
+/***/ }),
 /* 3 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -10949,9 +10947,9 @@
 	exports.encode = exports.stringify = __webpack_require__(5);
 
 
-/***/ },
+/***/ }),
 /* 4 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
 	//
@@ -11035,9 +11033,9 @@
 	};
 
 
-/***/ },
+/***/ }),
 /* 5 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
 	//
@@ -11105,9 +11103,9 @@
 	};
 
 
-/***/ },
+/***/ }),
 /* 6 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	exports.init = function init(main) {
 	  // Elm's apparent lack of virtual DOM lifecycle management
@@ -11148,9 +11146,9 @@
 	};
 
 
-/***/ },
+/***/ }),
 /* 7 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	var FAVICON_WIDTH = 16;
 	var FAVICON_SQUARES_PER_SIDE = 4;
@@ -11211,5 +11209,5 @@
 	module.exports = setFavicon;
 
 
-/***/ }
+/***/ })
 /******/ ]);

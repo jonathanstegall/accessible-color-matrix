@@ -5,7 +5,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack",
-    "start": "webpack-dev-server --port $PORT --host 0.0.0.0 --content-base static/"
+    "start": "node server.js",
+    "heroku-postbuild": "webpack -p --content-base static/"
   },
   "repository": {
     "type": "git",

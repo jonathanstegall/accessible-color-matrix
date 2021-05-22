@@ -10,6 +10,6 @@ npm install
 npm start
 ```
 
-Then visit http://localhost:3000/.
+Then visit http://localhost:8080/.
 
 [18F/brand#94]: https://github.com/18F/brand/pull/94

@@ -19,9 +19,9 @@
   },
   "homepage": "https://github.com/toolness/accessible-color-matrix#readme",
   "dependencies": {
-    "elm-webpack-loader": "^4.1.1",
-    "webpack": "^1.14.0",
-    "webpack-dev-server": "^1.16.2"
+    "elm-webpack-loader": "^8.0.0",
+    "webpack": "^5.37.1",
+    "webpack-dev-server": "^3.11.2"
   },
   "engines": {
     "node": "13.x"

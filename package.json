@@ -21,12 +21,12 @@
   "dependencies": {
     "elm": "^0.19.1-5",
     "elm-webpack-loader": "^8.0.0",
-    "webpack": "^5.38.0",
-    "webpack-cli": "^4.7.0",
-    "webpack-dev-server": "^3.11.2"
+    "webpack": "^5.75.0",
+    "webpack-cli": "^5.0.1",
+    "webpack-dev-server": "^4.11.1"
   },
   "engines": {
-    "node": "14.x",
-    "npm": "7.x"
+    "node": "19.x",
+    "npm": "9.x"
   }
 }

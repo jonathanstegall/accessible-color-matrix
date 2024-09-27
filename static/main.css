@@ -1541,6 +1541,17 @@ table {
   table th, table td {
     border: 1px solid #5b616b;
     padding: 1.5rem; }
+table thead th, table thead td {
+  background-color: #fff;
+  top: 0;
+  position: sticky;
+}
+
+td[scope="row"] {
+  left: 0;
+  position: static;
+  background: #fff;
+}
 
 .usa-table-borderless thead tr {
   background-color: transparent; }

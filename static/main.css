@@ -1549,7 +1549,7 @@ table thead th, table thead td {
 
 td[scope="row"] {
   left: 0;
-  position: static;
+  position: sticky;
   background: #fff;
 }
 
